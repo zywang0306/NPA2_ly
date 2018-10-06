@@ -1,11 +1,11 @@
 // Author : Yu Lei
 // Last Update: 
 // Used for: define the datastruct for message
-
+/*
 #include <stdio.h>
-#include <stlib.h>
+#include <stdlib.h>
 #include <string.h>
-
+*/
 //static const int PAYLOAD_LEN 512
 #define PAYLOAD_LEN 512
 
@@ -25,11 +25,11 @@ struct SBCP_Attribute{
     unsigned int Type : 16;
     unsigned int Length : 16;
     char Payload[512];
-}
+};
 
 struct SBCP_Message{
     unsigned int Vrsn : 9;
     unsigned int Type : 7;
     unsigned int Length : 16;
     struct SBCP_Attribute attribute;
-}
+};
