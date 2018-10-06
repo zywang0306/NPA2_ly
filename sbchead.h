@@ -23,14 +23,14 @@ static const int CLIENT_COUNT = 3;
 
 
 struct SBCP_Attribute{
-    unsigned int Type : 16;
-    unsigned int Length : 16;
+    unsigned int Type;
+    unsigned int Length;
     char Payload[512];
 };
 
 struct SBCP_Message{
-    unsigned int Vrsn : 9;
-    unsigned int Type : 7;
-    unsigned int Length : 16;
+    unsigned int Vrsn;
+    unsigned int Type;
+    unsigned int Length;
     struct SBCP_Attribute attribute;
 };

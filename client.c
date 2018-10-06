@@ -42,6 +42,7 @@ void join(char* username, int socket_fd, struct SBCP_Message *message_to_server)
     printf("The length of username is %d\n", user_len);
     printf("The socket_fd is  %d\n", socket_fd);
     
+    
     struct SBCP_Attribute attribute;
     attribute.Type = USERNAME;
     attribute.Length = 4 + user_len;
@@ -56,8 +57,10 @@ void join(char* username, int socket_fd, struct SBCP_Message *message_to_server)
     printf("Ready to join...\n");
 //   printf("Len is %d\n", message_to_server->Length);
 //    printf("Len is %d\n", message_to_server->Length);
-    
-    if(write(socket_fd, &message_to_server, sizeof(struct SBCP_Message)) < 0){
+
+//    if(write(socket_fd, message_to_server->attribute.Length, 2) < 0){
+//    if(write(socket_fd, &(message_to_server->attribute.Payload), user_len) < 0){
+    if(write(socket_fd, message_to_server, sizeof(struct SBCP_Message)) < 0){
         printf("Failed...\n");
         perror("Error : Failed to join to the server...\n");
         exit(0);

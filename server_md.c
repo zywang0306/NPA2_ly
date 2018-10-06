@@ -12,6 +12,7 @@
 
 #include "sbchead.h"
 
+/*
 void subprocess(int socket, struct SBCP_Message *message_from_client){
     int msglen= sizeof(message_from_client);
 //    bzero(&message_from_client, msglen);
@@ -22,12 +23,15 @@ void subprocess(int socket, struct SBCP_Message *message_from_client){
         printf("%c",(message_from_client->attribute.Payload[i]));
     }
 };
+*/
 
 int main(int argc, char* argv[]){
     struct sockaddr_in sin;
     int len;
     int socket_id, new_socket_id; //This is the socket
 //we don't need buf in the main.
+    
+    char Payload[512];
     
     if(argc != 4){
         fprintf(stderr, "usage: simplex - talk host\n");
@@ -46,9 +50,9 @@ int main(int argc, char* argv[]){
     sin.sin_port = htons(atoi(port_no));
     printf("The max_clients is %d\n", max_clients);
     
-    struct SBCP_Message *message_from_client;
-    message_from_client = malloc(sizeof(struct SBCP_Message));
-    
+    struct SBCP_Message message_from_client;
+//    message_from_client = malloc(sizeof(struct SBCP_Message));
+//    bzero()
     /* setup passive open*/
     if((socket_id = socket(AF_INET, SOCK_STREAM, 0)) < 0){
         perror("Simplex - talk : socket");
@@ -75,19 +79,14 @@ int main(int argc, char* argv[]){
             perror("simplex - talk: accept\n");
             exit(0);
         }
-        printf("Try to get into the sub process...\n");
-        int pid = fork();
+        printf("begin\n");
         
-        if(pid < 0){
-            perror("Failure to fork");
+        while(len = read(new_socket_id, &message_from_client, sizeof(struct SBCP_Message))){
+            printf("%d\n", message_from_client.attribute.Length);
+            printf("%s\n", message_from_client.attribute.Payload);
         }
-        if (pid == 0) { // The child process is generated.
-            subprocess(new_socket_id, message_from_client); // Fork successfully and try to handle the messages
-            exit(0);
-        }
-        else {
-             close(new_socket_id);
-        }
+        
+        close(new_socket_id);
     }
     return 0;
 }
