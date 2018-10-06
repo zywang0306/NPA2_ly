@@ -1,9 +1,3 @@
-// Author : Yu Lei
-// Last Update: 
-// Format: ./server server_ip server_port max_clients
-// initiate JOIN, can SEND and FWD messages
-// use select to handle both sending and receving
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -20,10 +14,10 @@
 
 void subprocess(int socket, struct SBCP_Message *message_from_client){
     int msglen= sizeof(message_from_client);
-    bzero((struct message *) &message_from_client,msglen);
-    int n=read(socket,(struct SBCP_Message *) &message_from_client,msglen);
-    printf("username is ");
-    int i = 0;
+//    bzero(&message_from_client, msglen);
+    int n=read(socket, message_from_client, msglen);
+    printf("Length is %d\n", (unsigned int) message_from_client->attribute.Length);
+    int i;
     for(i=0;i<(message_from_client->attribute.Length-4);i++){
         printf("%c",(message_from_client->attribute.Payload[i]));
     }
@@ -81,7 +75,7 @@ int main(int argc, char* argv[]){
             perror("simplex - talk: accept\n");
             exit(0);
         }
-        
+        printf("Try to get into the sub process...\n");
         int pid = fork();
         
         if(pid < 0){

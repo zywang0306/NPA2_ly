@@ -54,12 +54,16 @@ void join(char* username, int socket_fd, struct SBCP_Message *message_to_server)
     message_to_server->attribute = attribute;
     
     printf("Ready to join...\n");
-    if(write(socket_fd, &message_to_server, sizeof(message_to_server)) < 0){
+//   printf("Len is %d\n", message_to_server->Length);
+//    printf("Len is %d\n", message_to_server->Length);
+    
+    if(write(socket_fd, &message_to_server, sizeof(struct SBCP_Message)) < 0){
         printf("Failed...\n");
         perror("Error : Failed to join to the server...\n");
         exit(0);
     }else{
-        printf("Join to the server successfully...");
+        printf("Join to the server successfully...\n");
+        printf("The length is %d...\n", sizeof(struct SBCP_Message));
     }
     
     return;
@@ -103,16 +107,16 @@ int main(int argc, char *argv[]){
     }
     
 //    int user_len = sizeof(username);
-/*
-    if(connect(socket_id, (struct sockaddr *)&sin, sizeof(sin)) < 0){
+
+    if(connect(socket_fd, (struct sockaddr *)&sin, sizeof(sin)) < 0){
         perror("Error: connect\n");
-        close(socket_id);
+        close(socket_fd);
         exit(0);
     }else{
         printf("User %s successfully connected to the server...\n", username);
     }
-*/    
-    join(username, socket_fd, message_to_server);
+    
+    join(username, socket_fd, message_to_server); // Use JOIN to send the username.
     
     printf("The message username is %s\n", message_to_server->attribute.Payload);
     
