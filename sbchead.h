@@ -1,24 +1,25 @@
 // Author : Yu Lei
 // Last Update: 
 // Used for: define the datastruct for message
-/*
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-*/
-//static const int PAYLOAD_LEN 512
-#define PAYLOAD_LEN 512
+
+static const int MAX_PEDING = 512;
+static const int PAYLOAD_LEN = 512;
+//#define PAYLOAD_LEN 512
 
 //type of message
-#define JOIN 2
-#define SEND 4
-#define FWD 3
+static const int JOIN = 2;
+static const int SEND = 4;
+static const int FWD = 3;
 
 //type of attribute
-#define USERNAME 2
-#define MESSAGE 4
-#define REASON 1
-#define CLIENT_COUNT 3
+static const int USERNAME = 2;
+static const int MESSAGE = 4;
+static const int REASON = 1;
+static const int CLIENT_COUNT = 3;
 
 
 struct SBCP_Attribute{

@@ -1,6 +1,5 @@
 // Author : Yu Lei
 // Last Update: 
-// Used for: define the datastruct for message
 // Format: ./client username server_ip server_port
 // initiate JOIN, can SEND and FWD messages
 // use select to handle both sending and receving
@@ -17,30 +16,79 @@
 #include <unistd.h>
 #include <errno.h>
 
-void join(){
+#include "sbchead.h"
+
+
+/*
+typedef struct{
+    unsigned int Type : 16;
+    unsigned int Length : 16;
+    char Payload[512];
+}SBCP_Attribute;
+
+typedef struct{
+    unsigned int Vrsn : 9;
+    unsigned int Type : 7;
+    unsigned int Length : 16;
+    struct SBCP_Attribute attribute;
+}SBCP_Message;
+*/
+
+//Join function try to send message to the server.
+void join(char* username, int socket_fd, struct SBCP_Message *message_to_server){
+
+    int user_len = strlen(username);
+    printf("The username is %s\n", username);
+    printf("The length of username is %d\n", user_len);
+    printf("The socket_fd is  %d\n", socket_fd);
     
+    struct SBCP_Attribute attribute;
+    attribute.Type = USERNAME;
+    attribute.Length = 4 + user_len;
+    bzero((char*)&attribute.Payload,sizeof(attribute.Payload));
+    strcpy(attribute.Payload,username);
+    
+    message_to_server->Vrsn = 3;
+    message_to_server->Type = JOIN;
+    message_to_server->Length = 8 + user_len;
+    message_to_server->attribute = attribute;
+    
+    printf("Ready to join...\n");
+    if(write(socket_fd, &message_to_server, sizeof(message_to_server)) < 0){
+        printf("Failed...\n");
+        perror("Error : Failed to join to the server...\n");
+        exit(0);
+    }else{
+        printf("Join to the server successfully...");
+    }
+    
+    return;
 }
 
-void send_Message(){
+void send_MSG(){
     
 }
 
 int main(int argc, char *argv[]){
     if(argc != 4){
-        fprintf(stderr, "usage: simplex - talk host\n");
+        fprintf(stderr, "Error: command is not correct...\n");
         exit(1);
     }
     
     char* username = argv[1];
     char* server_address = argv[2];
     char* port_no = argv[3];
-    printf("The username from command line is %s\n",username);
-    printf("The ip address from command line is %s\n",server_address);
-    printf("The port number from command line is %s\n",port_no);
+    printf("The username from command line is %s\n", username);
+    printf("The ip address from command line is %s\n", server_address);
+    printf("The port number from command line is %s\n", port_no);
     
     struct sockaddr_in sin;
     char *host;
     int socket_fd;
+    struct SBCP_Message *message_to_server;
+    struct SBCP_Message *message_from_server;
+    message_to_server = malloc(sizeof(struct SBCP_Message));
+    message_from_server = malloc(sizeof(struct SBCP_Message));
     
     bzero((char *)&sin, sizeof(sin));
     sin.sin_family = AF_INET;
@@ -48,12 +96,26 @@ int main(int argc, char *argv[]){
     sin.sin_port = htons(atoi(port_no));
 
     if((socket_fd = socket(AF_INET, SOCK_STREAM, 0))< 0){
-        perror("simplex - talk : socket\n");
+        perror("Error : socket\n");
         exit(0);
     }else{
-        printf("Socket successfully created!\n");
+        printf("Socket successfully created...\n");
     }
-
+    
+//    int user_len = sizeof(username);
+/*
+    if(connect(socket_id, (struct sockaddr *)&sin, sizeof(sin)) < 0){
+        perror("Error: connect\n");
+        close(socket_id);
+        exit(0);
+    }else{
+        printf("User %s successfully connected to the server...\n", username);
+    }
+*/    
+    join(username, socket_fd, message_to_server);
+    
+    printf("The message username is %s\n", message_to_server->attribute.Payload);
+    
 }
 
 
