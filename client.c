@@ -54,7 +54,7 @@ void join(char* username, int socket_fd, struct SBCP_Message *message_to_server)
     message_to_server->Length = 8 + user_len;
     message_to_server->attribute = attribute;
     
-    printf("Ready to join...\n");
+    printf("Ready to JOIN...\n");
 //   printf("Len is %d\n", message_to_server->Length);
 //    printf("Len is %d\n", message_to_server->Length);
 
@@ -72,8 +72,37 @@ void join(char* username, int socket_fd, struct SBCP_Message *message_to_server)
     return;
 }
 
-void send_MSG(){
+
+void send_MSG(int socket_fd, struct SBCP_Message *message_to_server){
+    char buf[PAYLOAD_LEN];
+    fgets(buf, sizeof(buf) - 1, stdin);
+    int lastIndex = strlen(buf) - 1;
+    if(buf[lastIndex] == '\n'){
+        buf[lastIndex] == '\0';
+    }
+    struct SBCP_Attribute attribute;
+    attribute.Type = MESSAGE;
+    attribute.Length = 4 + strlen(buf);
+    bzero((char*)&attribute.Payload,sizeof(attribute.Payload));
+    strcpy(attribute.Payload,buf);
     
+    message_to_server->Vrsn = 3;
+    message_to_server->Type = SEND;
+    message_to_server->Length = 8 + strlen(buf);
+    message_to_server->attribute = attribute;
+    
+    printf("Ready to SEND...\n");
+    
+    if(write(socket_fd, message_to_server, sizeof(struct SBCP_Message)) < 0){
+        printf("Failed...\n");
+        perror("Error : Failed to SEND to the server...\n");
+        exit(0);
+    }else{
+        printf("SEND message to the server successfully...\n");
+        printf("The length is %d...\n", sizeof(struct SBCP_Message));
+    }
+    
+    return;
 }
 
 int main(int argc, char *argv[]){
@@ -118,11 +147,16 @@ int main(int argc, char *argv[]){
     }else{
         printf("User %s successfully connected to the server...\n", username);
     }
+
+    send_MSG(socket_fd, message_to_server);
     
-    join(username, socket_fd, message_to_server); // Use JOIN to send the username.
+//    join(username, socket_fd, message_to_server); // Use JOIN to send the username.
     
     printf("The message username is %s\n", message_to_server->attribute.Payload);
     
+    while(1){
+        
+    }
 }
 
 

@@ -82,7 +82,7 @@ int main(int argc, char* argv[]){
         printf("begin\n");
         
         while(len = read(new_socket_id, &message_from_client, sizeof(struct SBCP_Message))){
-            printf("%d\n", message_from_client.attribute.Length);
+            printf("%d\n", message_from_client.attribute.Length - 4);
             printf("%s\n", message_from_client.attribute.Payload);
         }
         
