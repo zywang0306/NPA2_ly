@@ -8,7 +8,11 @@
 
 static const int MAX_PEDING = 512;
 static const int PAYLOAD_LEN = 512;
+static const int USERNAME_MAX = 16; //define the max of username.
 //#define PAYLOAD_LEN 512
+
+//define for select
+static const int STDIN = 0;
 
 //type of message
 static const int JOIN = 2;

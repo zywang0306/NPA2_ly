@@ -17,7 +17,7 @@
 #include <errno.h>
 
 #include "sbchead.h"
-
+char user_fwd_name[16];
 
 /*
 typedef struct{
@@ -34,13 +34,14 @@ typedef struct{
 }SBCP_Message;
 */
 
+
 //Join function try to send message to the server.
 void join(char* username, int socket_fd, struct SBCP_Message *message_to_server){
 
     int user_len = strlen(username);
-    printf("The username is %s\n", username);
-    printf("The length of username is %d\n", user_len);
-    printf("The socket_fd is  %d\n", socket_fd);
+//    printf("The username is %s\n", username);
+//    printf("The length of username is %d\n", user_len);
+//    printf("The socket_fd is  %d\n", socket_fd);
     
     
     struct SBCP_Attribute attribute;
@@ -65,8 +66,8 @@ void join(char* username, int socket_fd, struct SBCP_Message *message_to_server)
         perror("Error : Failed to join to the server...\n");
         exit(0);
     }else{
-        printf("Join to the server successfully...\n");
-        printf("The length is %d...\n", sizeof(struct SBCP_Message));
+        printf("Join to the server successfully...\n\n");
+//        printf("The length is %d...\n", sizeof(struct SBCP_Message));
     }
     
     return;
@@ -101,7 +102,36 @@ void send_MSG(int socket_fd, struct SBCP_Message *message_to_server){
         printf("SEND message to the server successfully...\n");
         printf("The length is %d...\n", sizeof(struct SBCP_Message));
     }
+    return;
+}
+
+void read_MSG(int socket_fd, struct SBCP_Message *message_from_server){
+    int readno;
+    readno = read(socket_fd, message_from_server, sizeof(struct SBCP_Message));
+    if(readno < 0){
+        printf("Failed...\n");
+        perror("Error : Failed to read the FWD message from the server...\n");
+        exit(0);
+    }
     
+    if(message_from_server->Vrsn != 3 || message_from_server->Type != FWD || message_from_server->Length <= 0){
+        return;
+    } // can not read the header
+
+    if((message_from_server->attribute.Type != 2 &&  message_from_server->attribute.Type != 4) || message_from_server->attribute.Length <= 0){
+        return;
+    } // can not read the header of attribute
+    
+//    printf("Try to read...\n");
+    
+    if(message_from_server->attribute.Type == 2){
+        strcpy(user_fwd_name, message_from_server->attribute.Payload);
+        printf("The user is %s.\n", user_fwd_name);
+    }
+
+    if(message_from_server->attribute.Type == 4){
+        printf("User %s says: %s\n", user_fwd_name, message_from_server->attribute.Payload);
+    }    
     return;
 }
 
@@ -116,7 +146,7 @@ int main(int argc, char *argv[]){
     char* port_no = argv[3];
     printf("The username from command line is %s\n", username);
     printf("The ip address from command line is %s\n", server_address);
-    printf("The port number from command line is %s\n", port_no);
+    printf("The port number from command line is %s\n\n", port_no);
     
     struct sockaddr_in sin;
     char *host;
@@ -145,18 +175,44 @@ int main(int argc, char *argv[]){
         close(socket_fd);
         exit(0);
     }else{
-        printf("User %s successfully connected to the server...\n", username);
+        printf("Socket connect successfully...\n", username);
     }
 
-    send_MSG(socket_fd, message_to_server);
+//    send_MSG(socket_fd, message_to_server);
     
-//    join(username, socket_fd, message_to_server); // Use JOIN to send the username.
+    join(username, socket_fd, message_to_server); // Use JOIN to send the username.
     
-    printf("The message username is %s\n", message_to_server->attribute.Payload);
+//    printf("The message username is %s\n", message_to_server->attribute.Payload);
+    
+    //initialize select;
+    fd_set readfds;
+    int fdmax;
+    FD_ZERO(&readfds);
+    FD_SET(STDIN, &readfds);
+    FD_SET(socket_fd, &readfds);
+    fdmax = socket_fd + 1;
+    //End initialize. 
     
     while(1){
+//        printf("Enter while loop for select again...\n");
+        if(select(fdmax, &readfds,NULL ,NULL, NULL) < 0){
+            perror("Error: connect\n");
+            close(socket_fd);
+            exit(0);
+        }
         
+//        printf("Select successfully...\n");
+        
+        if(FD_ISSET(STDIN, &readfds)){
+            send_MSG(socket_fd, message_to_server);
+        }
+        
+        if(FD_ISSET(socket_fd, &readfds)){
+            read_MSG(socket_fd, message_from_server);
+        }
     }
+    
+    close(socket_fd);
 }
 
 

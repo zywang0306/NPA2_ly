@@ -51,6 +51,7 @@ int main(int argc, char* argv[]){
     printf("The max_clients is %d\n", max_clients);
     
     struct SBCP_Message message_from_client;
+    struct SBCP_Message message_to_client;
 //    message_from_client = malloc(sizeof(struct SBCP_Message));
 //    bzero()
     /* setup passive open*/
@@ -74,19 +75,58 @@ int main(int argc, char* argv[]){
         perror("Cannot find the client!\n");
     }
     
+//    message_to_client = malloc(sizeof(struct SBCP_Message));
+    
     while(1){
         if((new_socket_id = accept(socket_id,(struct sockaddr *)&sin, &len)) <0){
             perror("simplex - talk: accept\n");
             exit(0);
         }
         printf("begin\n");
-        
-        while(len = read(new_socket_id, &message_from_client, sizeof(struct SBCP_Message))){
+       
+/*        while(len = read(new_socket_id, &message_from_client, sizeof(struct SBCP_Message))){
             printf("%d\n", message_from_client.attribute.Length - 4);
             printf("%s\n", message_from_client.attribute.Payload);
+        } 
+        
+// The committed lines is another test for JOIN.        
+*/        
+        char* users = "Yu Lei"; 
+        struct SBCP_Attribute attribute;
+        attribute.Type = USERNAME;
+        attribute.Length = 4 + sizeof(users);
+        bzero((char*)&attribute.Payload,sizeof(attribute.Payload));
+        strcpy(attribute.Payload, users);
+        
+        message_to_client.Vrsn = 3;
+        message_to_client.Type = FWD;
+        message_to_client.Length = 8 + sizeof(users);
+        message_to_client.attribute = attribute;
+        if(write(new_socket_id, &message_to_client, sizeof(struct SBCP_Message)) < 0){
+            printf("Failed...\n");
+            perror("Error : Failed to FWD usename...\n");
+            exit(0);
+        }else{
+            printf("Send to the client successfully...\n");
+            printf("The length is %d...\n", sizeof(struct SBCP_Message));
         }
         
-        close(new_socket_id);
+        char* messages = "Veni, vidi, vici!"; 
+        message_to_client.Length = 8 + sizeof(messages);
+        message_to_client.attribute.Type = MESSAGE;
+        message_to_client.attribute.Length = 4 + sizeof(messages);
+        bzero((char*)&attribute.Payload,sizeof(message_to_client.attribute.Payload));
+        strcpy(message_to_client.attribute.Payload, messages);
+        if(write(new_socket_id, &message_to_client, sizeof(struct SBCP_Message)) < 0){
+            printf("Failed...\n");
+            perror("Error : Failed to FWD message...\n");
+            exit(0);
+        }else{
+            printf("Send to the client successfully...\n");
+            printf("The length is %d...\n", sizeof(struct SBCP_Message));
+            while(1);
+        }
+        
     }
     return 0;
 }
