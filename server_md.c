@@ -1,5 +1,4 @@
-// Author : Yu Lei
-// Last Update: 
+
 
 #include <stdio.h>
 #include <sys/types.h>
