@@ -38,3 +38,9 @@ struct SBCP_Message{
     unsigned int Length : 16;
     struct SBCP_Attribute attribute;
 };
+
+struct SBCP_Client{
+    int sock_fd;
+    char username[16];
+    
+}

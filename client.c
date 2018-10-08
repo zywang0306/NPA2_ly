@@ -100,7 +100,7 @@ void send_MSG(int socket_fd, struct SBCP_Message *message_to_server){
         exit(0);
     }else{
         printf("SEND message to the server successfully...\n");
-        printf("The length is %d...\n", sizeof(struct SBCP_Message));
+//        printf("The length is %d...\n", sizeof(struct SBCP_Message));
     }
     return;
 }
@@ -118,18 +118,18 @@ void read_MSG(int socket_fd, struct SBCP_Message *message_from_server){
         return;
     } // can not read the header
 
-    if((message_from_server->attribute.Type != 2 &&  message_from_server->attribute.Type != 4) || message_from_server->attribute.Length <= 0){
+    if((message_from_server->attribute.Type != USERNAME &&  message_from_server->attribute.Type != MESSAGE) || message_from_server->attribute.Length <= 0){
         return;
     } // can not read the header of attribute
     
 //    printf("Try to read...\n");
     
-    if(message_from_server->attribute.Type == 2){
+    if(message_from_server->attribute.Type == USERNAME){
         strcpy(user_fwd_name, message_from_server->attribute.Payload);
         printf("The user is %s.\n", user_fwd_name);
     }
 
-    if(message_from_server->attribute.Type == 4){
+    if(message_from_server->attribute.Type == MESSAGE){
         printf("User %s says: %s\n", user_fwd_name, message_from_server->attribute.Payload);
     }    
     return;
@@ -202,14 +202,15 @@ int main(int argc, char *argv[]){
         }
         
 //        printf("Select successfully...\n");
-        
+        if(FD_ISSET(socket_fd, &readfds)){
+//            printf("SELECT try to read\n");
+            read_MSG(socket_fd, message_from_server);
+        }
         if(FD_ISSET(STDIN, &readfds)){
             send_MSG(socket_fd, message_to_server);
         }
-        
-        if(FD_ISSET(socket_fd, &readfds)){
-            read_MSG(socket_fd, message_from_server);
-        }
+        FD_SET(STDIN,&readfds);
+        FD_SET(socket_fd,&readfds);
     }
     
     close(socket_fd);
