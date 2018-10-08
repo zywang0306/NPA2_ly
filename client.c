@@ -48,6 +48,7 @@ void join(char* username, int socket_fd, struct SBCP_Message *message_to_server)
     attribute.Type = USERNAME;
     attribute.Length = 4 + user_len;
     bzero((char*)&attribute.Payload,sizeof(attribute.Payload));
+//    bzero((char*)&message_to_server->attribute.Payload,sizeof(message_to_server->attribute.Payload));
     strcpy(attribute.Payload,username);
     
     message_to_server->Vrsn = 3;

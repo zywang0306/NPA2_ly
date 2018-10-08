@@ -41,6 +41,6 @@ struct SBCP_Message{
 
 struct SBCP_Client{
     int sock_fd;
+    int online_flag;
     char username[16];
-    
-}
+};

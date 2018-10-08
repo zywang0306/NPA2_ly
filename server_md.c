@@ -17,7 +17,38 @@
 char user_name[16];
 int user_number = 0;
 int flag = 0;
+int Max_Client;
+struct SBCP_Client *client;
 
+void join_user(int sock_fd, char* user_name_, struct SBCP_Client *client){
+    int curr_index = user_number - 1;
+    client[curr_index].sock_fd = sock_fd;
+    client[curr_index].online_flag = 1;
+    strcpy(client[curr_index].username, user_name_);
+//    printf("Successfully JOIN the user %s\n", client[curr_index].username);
+//    client[curr_index]->online_flag = 0;
+}
+
+/*
+void delete_user(int sock_fd, char* user_name, struct SBCP_Client *client){
+    int i;
+    for(i = 0; i < user_number; i++){
+        if(client[i] ->sock_fd == sock_fd){
+            if(i != (user_number - 1)){
+                client[i]->sock_fd = client[user_number - 1]->sock_fd;
+                strcpy(client[i]->user_name,client[user_number - 1]->user_name);
+                client[user_number - 1] -> online_flag = 0;
+                user_number--;
+                return;
+            }else{
+                client[user_number - 1] -> online_flag = 0;
+                user_number--;
+                return;
+            }
+        }
+    }
+}
+*/
 void fwd_MSG(int socket_fd, struct SBCP_Message *message_from_client, struct SBCP_Message *message_to_client){
     struct SBCP_Attribute attribute;
     attribute.Type = USERNAME;
@@ -48,11 +79,11 @@ void fwd_MSG(int socket_fd, struct SBCP_Message *message_from_client, struct SBC
         perror("Error : Failed to FWD message...\n");
         exit(0);
     }else{
-        printf("Send to the client successfully...\n");
+        printf("FWD to the client successfully...\n");
     }
 }
 
-void read_MSG(int socket_fd, struct SBCP_Message *message_from_client, struct SBCP_Message *message_to_client, ){
+void read_MSG(int socket_fd, struct SBCP_Message *message_from_client, struct SBCP_Message *message_to_client, struct SBCP_Client *client){
     int readno;
     readno = read(socket_fd, message_from_client, sizeof(struct SBCP_Message));
     if(readno < 0){
@@ -74,22 +105,29 @@ void read_MSG(int socket_fd, struct SBCP_Message *message_from_client, struct SB
     
     if(message_from_client->Type == JOIN && message_from_client->attribute.Type == USERNAME){
         strcpy(user_name, message_from_client->attribute.Payload);
-        if(isExist(user_name)){
-            continue;
+        {
+        //if(!isExist(user_name)){
+            printf("The joined user is %s.\n", user_name);
+            if(user_number < Max_Client){
+                user_number++;
+                printf("The number of joined users is %d.\n", user_number);
+                join_user(socket_fd, user_name, client);
+            }else{
+                printf("Warning: The number of connected clients is reached upper limit! Cannot JOIN!!!\n");
+            }
+            
         }
-        printf("The joined user is %s.\n", user_name);
-        user_number++;
-        printf("The number of joined users is %d.\n", user_number);
     }
     
     if(message_from_client->Type == SEND && message_from_client->attribute.Type == MESSAGE){
         flag = 1;
         printf("received message %s", message_from_client->attribute.Payload);
         printf("User %s says: %s", user_name, message_from_client->attribute.Payload);
-        int i;
+/*        int i;
         for(i = 0; i < user_number; i++){
             Flag_sent[i] = 1;
         }
+        */
     }    
     return;
 }
@@ -103,7 +141,6 @@ int main(int argc, char* argv[]){
 //we don't need buf in the main.
     char Payload[512];
     
-    clients = (struct SBCP_Client *)malloc(maxClients*sizeof(struct SBCP_client_info));
     
     
     if(argc != 4){
@@ -113,7 +150,8 @@ int main(int argc, char* argv[]){
     
     char* server_address = argv[1];
     char* port_no = argv[2];
-    int max_clients = atoi(argv[3]);
+    Max_Client = atoi(argv[3]);
+    client = (struct SBCP_Client *)malloc(Max_Client*sizeof(struct SBCP_Client));
     int Flag_sent[512];
     printf("The port number from command line is %s\n",port_no);
     
@@ -121,7 +159,7 @@ int main(int argc, char* argv[]){
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = inet_addr(server_address); // maysbe ip address;
     sin.sin_port = htons(atoi(port_no));
-    printf("The max_clients is %d\n", max_clients);
+    printf("The max_clients is %d\n", Max_Client);
     
     struct SBCP_Message *message_from_client;
     struct SBCP_Message *message_to_client;
@@ -151,9 +189,9 @@ int main(int argc, char* argv[]){
     
 //    message_to_client = malloc(sizeof(struct SBCP_Message));
     fd_set readfds, fd_temp;
-    int fdmax, i, j;
+    int fdmax, i, j, k;
     FD_ZERO(&readfds);
-    FD_SET(STDIN, &readfds);
+//    FD_SET(STDIN, &readfds);
     FD_SET(socket_id, &readfds);
 //    FD_SET(socket_fd, &readfds);
     fdmax = socket_id + 1;
@@ -166,23 +204,31 @@ int main(int argc, char* argv[]){
             perror("Error: select\n");
             close(socket_id);
             exit(0);
+        
         }
 //        printf("CAN SELECT!\n");
         for(i = 0; i < fdmax; i++){
             if(FD_ISSET(i, &fd_temp)){
+                printf("This is select i : %d\n", i);
                 if(i == socket_id){
                     if((new_socket_id = accept(socket_id,(struct sockaddr *)&sin, &len)) <0){
                         perror("simplex - talk: accept\n");
                         exit(0);
                     }
                     printf("CAN ACCEPT! And new_socket_id is : %d\n", new_socket_id);
+                    //read_MSG(new_socket_id, message_from_client, message_to_client, client);
                     FD_SET(new_socket_id, &readfds);
-                    if(new_socket_id > fdmax){
+                    FD_SET(new_socket_id, &fd_temp);
+                    if(new_socket_id > (fdmax - 1)){
                         fdmax = new_socket_id + 1;
                     }
                 }else{
-                    read_MSG(i, message_from_client, message_to_client);
+                    read_MSG(i, message_from_client, message_to_client, client);
                     if(flag == 1){
+                        printf("Now the user list:\n");
+                        for(k = 0; k < user_number; k++){
+                            printf("The %dst client is %s.\n", k, client[k].username);
+                        }
                         for(j = 0; j < fdmax; j++){
                             if(FD_ISSET(j, &readfds) && j != socket_id){
                                 fwd_MSG(j, message_from_client, message_to_client);
